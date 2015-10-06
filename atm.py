@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import sys
+import sys, re
 import optparse
 
 parser = optparse.OptionParser()
@@ -28,9 +28,17 @@ if options.a == None:
 elif options.n == None and options.d == None and options.w == None and not options.g:
     sys.exit(255)
 
+#Check that file names meets specifications
+if len(options.s) > 255 or len(options.s) < 1 or len(options.c) > 255 or len(options.c) < 1:
+    sys.exit(255)
+    
+if len(options.a) > 250 or len(options.a) < 1:
+    sys.exit(255)
+
 #Check that authFile exists.
 try:
     authFile = open(options.s)
+    cardFile = open(options.c)
 except IOError:
     sys.exit(255)
 
@@ -43,12 +51,15 @@ for number in ipAddress:
             sys.exit(255)
     except ValueError:
         sys.exit(255)
-    
-#Getting here implies all pre-requisites have been met
+
+#Check that port is within range
+if options.p < 1024 or options.p > 65535:
+    sys.exit(255)
+
+#Getting here implies all pre-requisites have been met (NOT FINISHED.)
 accountName = options.a
 ipAddress = options.i
 port = options.p
-cardFile = options.c
 
 print "Running atm with the following settings"
 print "Account Name is", accountName
