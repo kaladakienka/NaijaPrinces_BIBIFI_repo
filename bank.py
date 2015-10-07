@@ -2,10 +2,12 @@
 
 import argparse
 import json
+from netmsg import NetMsg
 import os
 import sys
 import SocketServer
-import uuid
+
+auth_key = ""
 
 
 class Account:
@@ -56,9 +58,14 @@ class Bank(SocketServer.BaseRequestHandler):
     def parse_request(self, data):
         try:
             # decrypt message
-            message_obj = json.loads(data)
+            net_msg = json.load(NetMsg.decryptJson(auth_key))
+            request = net_msg["request"]
+
+            if request["action"] is "new":
+                new_account = Account(request[""])
         except ValueError:
-            print "not a json object"
+            sys.stderr.write(255)
+            sys.exit(255)
 
     def handle(self):
         # self.request is the TCP socket connected to the client
@@ -90,12 +97,12 @@ def parse_cmd_line():
 
 #TODO: Generate auth file once
 def generate_auth_file(auth_file):
-    uid = uuid.uuid4()
-
+    global auth_key
     if not os.path.isfile(auth_file):
         f = open(auth_file, "wb")
         json_out = {}
-        json_out["secret_key"] = uid.hex
+        json_out["Secret_Key"] = NetMsg.generateKey()
+        auth_key = json_out["Secret_Key"]
         f.write(json.dumps(json_out))
         f.close()
         print "created"
