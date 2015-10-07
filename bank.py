@@ -1,9 +1,46 @@
 #!/usr/bin/env/python
 
 import argparse
+import json
+import os
 import sys
 import SocketServer
 import uuid
+
+
+class Account:
+    card_file = 0
+    account_name = ""
+    balance = 0
+
+    def __init__(self, card_file, name, balance):
+        self.card_file = card_file
+        self.account_name = name
+        self.balance = balance
+        json_out = {}
+        json_out["account"] = self.account_name
+        json_out["initial_balance"] = self.balance
+        print json.dumps(json_out)
+
+    def deposit(self, amount):
+        self.balance = self.balance + amount
+        json_out = {}
+        json_out["account"] = self.account_name
+        json_out["deposit"] = self.balance
+        print json.dumps(json_out)
+
+    def withdraw(self, amount):
+        self.balance = self.balance - amount
+        json_out = {}
+        json_out["account"] = self.account_name
+        json_out["withdraw"] = self.balance
+        print json.dumps(json_out)
+
+    def current_balance(self):
+        json_out = {}
+        json_out["account"] = self.account_name
+        json_out["balance"] = self.balance
+        print json.dumps(json_out)
 
 
 class Bank(SocketServer.BaseRequestHandler):
@@ -14,19 +51,22 @@ class Bank(SocketServer.BaseRequestHandler):
     override the handle() method to implement communication to the
     client.
     """
+    accounts = []
 
-    def generate_auth_file(self):
-        uid = uuid.uuid4()
-        uid.hex
-
-    def setup(self):
-        print self.server.auth_file
+    def parse_request(self, data):
+        try:
+            # decrypt message
+            message_obj = json.loads(data)
+        except ValueError:
+            print "not a json object"
 
     def handle(self):
         # self.request is the TCP socket connected to the client
         self.data = self.request.recv(1024).strip()
         print "{} wrote:".format(self.client_address[0])
         print self.data
+        self.parse_request(self.data)
+
         # just send back the same data, but upper-cased
         self.request.sendall(self.data.upper())
 
@@ -48,12 +88,27 @@ def parse_cmd_line():
     return args
 
 
+#TODO: Generate auth file once
+def generate_auth_file(auth_file):
+    uid = uuid.uuid4()
+
+    if not os.path.isfile(auth_file):
+        f = open(auth_file, "wb")
+        json_out = {}
+        json_out["secret_key"] = uid.hex
+        f.write(json.dumps(json_out))
+        f.close()
+        print "created"
+    else:
+        sys.exit(255)
+
+
 def main():
     args = parse_cmd_line()
 
     # Create the server, binding to localhost on port 9999
+    generate_auth_file(args["auth_file"])
     server = SocketServer.TCPServer(("localhost", int(args['port'])), Bank)
-    server.auth_file = args['auth_file']
 
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
