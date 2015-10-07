@@ -70,16 +70,17 @@ class NetMsg:
         return Fernet.generate_key()
 
 
-#netMsg1 =  NetMsg(1000,3000,"blah")
-netMsg1 =  NetMsg("blah")
-#netMsg1.setMsg("bla")
-key = NetMsg.generateKey()
-print "key: %s" % key
-encMsg = netMsg1.encryptedJson(key,netMsg1.getJson())
-decMsg = netMsg1.decryptJson(key,encMsg)
-print "%s" % decMsg
+if __name__ == "__main__":
+    #netMsg1 =  NetMsg(1000,3000,"blah")
+    netMsg1 =  NetMsg("blah")
+    #netMsg1.setMsg("bla")
+    key = NetMsg.generateKey()
+    print "key: %s" % key
+    encMsg = netMsg1.encryptedJson(key,netMsg1.getJson())
+    decMsg = netMsg1.decryptJson(key,encMsg)
+    print "%s" % decMsg
 
-# print "%s" % netMsg1.getJson()
+    # print "%s" % netMsg1.getJson()
 
 
 
