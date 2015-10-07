@@ -11,12 +11,12 @@ auth_key = ""
 
 
 class Account:
-    card_file = 0
+    card_key = ""
     account_name = ""
     balance = 0
 
-    def __init__(self, card_file, name, balance):
-        self.card_file = card_file
+    def __init__(self, card_key, name, balance):
+        self.card_key = card_key
         self.account_name = name
         self.balance = balance
         json_out = {}
@@ -55,14 +55,39 @@ class Bank(SocketServer.BaseRequestHandler):
     """
     accounts = []
 
+    def get_account(self, card_key):
+        for account in self.accounts:
+            if card_key is account.card_key:
+                return account
+
     def parse_request(self, data):
         try:
             # decrypt message
             net_msg = json.load(NetMsg.decryptJson(auth_key))
             request = net_msg["request"]
 
+            # perform atm request
             if request["action"] is "new":
-                new_account = Account(request[""])
+                if request["balance"] < 10:
+                    sys.stderr.write(255)
+                    sys.exit(255)
+
+                if self.get_account(request["cardFile"]):
+                    sys.stderr.write(255)
+                    sys.exit(255)
+
+                new_account = Account(request["amount"],
+                                      request["accountName"], request["amount"])
+                self.accounts.append(new_account)
+            elif request["action"] is "deposit":
+                account = self.get_account(request["cardFile"])
+                account.deposit(request["amount"])
+            elif request["action"] is "withdraw":
+                account = self.get_account(request["cardFile"])
+                account.withdraw(request["amount"])
+            elif request["action"] is "get":
+                account = self.get_account(request["cardFile"])
+                account.current_balance()
         except ValueError:
             sys.stderr.write(255)
             sys.exit(255)
@@ -90,7 +115,7 @@ def parse_cmd_line():
     try:
         args = vars(parser.parse_args())
     except SystemExit:
-        sys.exit()
+        sys.exit(255)
 
     return args
 
