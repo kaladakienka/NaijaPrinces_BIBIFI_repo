@@ -54,7 +54,8 @@ if not os.path.exists("./CardFiles/"):
 indexFile = open("./CardFiles/index", "a+")
 if len(indexFile.read()) == 0: #New file
     indexData = {}
-else: 
+else:
+    indexFile.seek(0)
     indexData = json.loads(indexFile.read())
 
 #Check that authFile exists.
