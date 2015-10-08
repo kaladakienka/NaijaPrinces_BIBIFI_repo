@@ -56,8 +56,10 @@ try:
     cardFile = open(options.c)
 except IOError, e:
     if options.n:
-        cardFile = open(options.c, "w")
-        cardFile.write(NetMsg.generateKey())
+        cardFile = open(options.c, "a+")
+        cardPin = NetMsg.generateKey()
+        cardFile.write(cardPin)
+        cardFile.close()
     else:
         sys.exit(255)
 
@@ -78,16 +80,25 @@ if options.p < 1024 or options.p > 65535:
 
 def getAuthKey():
     key = {}
-    numLines = 0;
+    numLines = 0
     for line in authFile:
         # print line
-        key = json.loads(line);
+        key = json.loads(line)
         numLines += 1
     
     if numLines > 1:
         print "WARNING: More than 1 line in authFile"
     # print key
     return str(key["SecretKey"])
+
+def getCardPin():
+    numLines = 0
+    for line in open(options.c):
+        cardPin = line
+        numLines += 1
+    
+    if numLines > 1:
+        print "WARNING: More than 1 line in cardFile"
 
 def main():
     #Getting here implies all pre-requisites have been met (NOT FINISHED!)
@@ -97,6 +108,7 @@ def main():
 
     request = {}
     request["accountName"] = accountName
+    request["pin"] = getCardPin()
     if options.n:
         request["action"] = "new"
         request["amount"] = options.n
@@ -110,6 +122,7 @@ def main():
         request["action"] = "get"
 
     request = {"request" : request}
+    print request
     message = NetMsg(request)
     encodedMessage = message.encryptedJson(getAuthKey(), message.getJson())
 
