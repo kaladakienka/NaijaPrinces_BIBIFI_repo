@@ -31,7 +31,13 @@ if options.a == None:
     sys.exit(255)
 elif options.n == None and options.d == None and options.w == None and not options.g:
     sys.exit(255)
-elif options.n and options.d and options.w and options.g:
+elif options.n and (options.d or options.w or options.g):
+    sys.exit(255)
+elif options.d and (options.n or options.w or options.g):
+    sys.exit(255)
+elif options.w and (options.n or options.d or options.g):
+    sys.exit(255)
+elif options.g and (options.n or options.w or options.d):
     sys.exit(255)
 
 #Check that file names meets specifications
@@ -41,6 +47,16 @@ if len(options.s) > 255 or len(options.s) < 1:
 if len(options.a) > 250 or len(options.a) < 1:
     sys.exit(255)
 
+#Create card file index
+if not os.path.exists("./CardFiles/"):
+    os.makedirs("./CardFiles/")
+
+indexFile = open("./CardFiles/index", "a+")
+if len(indexFile.read()) == 0: #New file
+    indexData = {}
+else: 
+    indexData = json.loads(indexFile.read())
+
 #Check that authFile exists.
 try:
     authFile = open(options.s)
@@ -49,19 +65,33 @@ except IOError, e:
 
 #Check that cardFile exists
 if options.c == None:
-    options.c = os.path.join("./", options.a + ".card")
-elif len(options.c) > 255 or len(options.c) < 1:
+    options.c = options.a + ".card"
+if len(options.c) > 255 or len(options.c) < 1:
     sys.exit(255)
+
 try:
-    cardFile = open(options.c)
-except IOError, e:
-    if options.n:
-        cardFile = open(options.c, "a+")
-        cardPin = NetMsg.generateKey()
-        cardFile.write(cardPin)
-        cardFile.close()
-    else:
+    if indexData[options.a] == options.c and options.n: #Trying to make a new account when it already exists
         sys.exit(255)
+    elif indexData[options.a] != options.c: #The card file you passed does not match the file we expect
+        sys.exit(255)
+except KeyError:
+    for entry in indexData:
+        if indexData[entry] == options.c: #If card file is associated with another account
+            sys.exit(255)
+
+cardFilePath = os.path.join("./CardFiles", options.c)    
+if not os.path.exists(cardFilePath) and options.n:
+    cardFile = open(cardFilePath, "a+")
+    cardPin = NetMsg.generateKey()
+    cardFile.write(cardPin)
+    cardFile.close()
+    
+    accountData = {}
+    accountData[options.a] = options.c
+    indexFile.write(json.dumps(accountData))
+    indexFile.close()
+else:
+    sys.exit(255)
 
 #Check that ipAddress meets specifications
 ipAddress = options.i.split(".")
@@ -93,12 +123,13 @@ def getAuthKey():
 
 def getCardPin():
     numLines = 0
-    for line in open(options.c):
+    for line in open(cardFilePath):
         cardPin = line
         numLines += 1
     
     if numLines > 1:
         print "WARNING: More than 1 line in cardFile"
+    return cardPin
 
 def main():
     #Getting here implies all pre-requisites have been met (NOT FINISHED!)
