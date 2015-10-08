@@ -55,7 +55,12 @@ class Bank(SocketServer.BaseRequestHandler):
     """
     accounts = []
 
-    def get_account(self, card_key):
+    def get_account_w_accout_name(self, account_name):
+        for account in self.accounts:
+            if account_name == account.account_name:
+                return account
+
+    def get_account_w_card_key(self, card_key):
         for account in self.accounts:
             if card_key is account.card_key:
                 return account
@@ -63,12 +68,13 @@ class Bank(SocketServer.BaseRequestHandler):
     def parse_request(self, data):
         try:
             # decrypt message
-            net_msg = json.load(NetMsg.decryptJson(auth_key))
-            request = net_msg["request"]
+            net_msg = json.loads(NetMsg.decryptJson(auth_key, data))
+            msg = net_msg["msg"]
 
             # perform atm request
-            if request["action"] is "new":
-                if request["balance"] < 10:
+            request = msg["request"]
+            if request["action"] == "new":
+                if request["amount"] < 10:
                     sys.stderr.write(255)
                     sys.exit(255)
 
@@ -79,13 +85,21 @@ class Bank(SocketServer.BaseRequestHandler):
                 new_account = Account(request["amount"],
                                       request["accountName"], request["amount"])
                 self.accounts.append(new_account)
-            elif request["action"] is "deposit":
+            elif request["action"] == "deposit":
+                if request["amount"] <= 0:
+                    sys.stderr.write(255)
+                    sys.exit(255)
+
+                if self.get_account(request["cardFile"]):
+                    sys.stderr.write(255)
+                    sys.exit(255)
+
                 account = self.get_account(request["cardFile"])
                 account.deposit(request["amount"])
-            elif request["action"] is "withdraw":
+            elif request["action"] == "withdraw":
                 account = self.get_account(request["cardFile"])
                 account.withdraw(request["amount"])
-            elif request["action"] is "get":
+            elif request["action"] == "get":
                 account = self.get_account(request["cardFile"])
                 account.current_balance()
         except ValueError:
@@ -126,8 +140,8 @@ def generate_auth_file(auth_file):
     if not os.path.isfile(auth_file):
         f = open(auth_file, "wb")
         json_out = {}
-        json_out["Secret_Key"] = NetMsg.generateKey()
-        auth_key = json_out["Secret_Key"]
+        json_out["SecretKey"] = NetMsg.generateKey()
+        auth_key = json_out["SecretKey"]
         f.write(json.dumps(json_out))
         f.close()
         print "created"

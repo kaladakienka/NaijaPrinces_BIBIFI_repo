@@ -76,7 +76,7 @@ if __name__ == "__main__":
     key = NetMsg.generateKey()
     print "key: %s" % key
     encMsg = netMsg1.encryptedJson(key, netMsg1.getJson())
-    decMsg = netMsg1.decryptJson(key, encMsg)
+    decMsg = netMsg1.decryptJson("wJ7JxFzMc0xXC66BD05UgYESWhBxB8LwHVC4xGGX5kk=", "gAAAAABWFccPazYAZQbGaqwxRLl90Ss0QYakfwNREcfA0nY-ZqUmyOPQ4ri7z4EZeg30ohiMbT0ng8mnlxtZXVYcfh-F_-dIMcyLcmKctalpayw57JHF114n5TebiOuGBKejV7LFT8MwOUZLifWFhQk1S2tdeuQxC8afko6ZWutH6_xol_oL2RFt3eSRpexuHCuH-_20udhlXWSMMA8PKR7ORldVfntUYVedYGDrsPBRcxmDTL6yvYw=")
     print "%s" % decMsg
 
     # print "%s" % netMsg1.getJson()
