@@ -91,8 +91,6 @@ if not os.path.exists(cardFilePath) and options.n:
     accountData[options.a] = options.c
     indexFile.write(json.dumps(accountData))
     indexFile.close()
-else:
-    sys.exit(255)
 
 #Check that ipAddress meets specifications
 ipAddress = options.i.split(".")
