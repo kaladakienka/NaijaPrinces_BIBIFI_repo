@@ -178,6 +178,8 @@ def main():
         received = sock.recv(1024)
         if int(received) == 419:
             sys.exit(255)
+        elif received == "protocol_error":
+            sys.exit(63)
     except socket.error, e:
         print e
     except ValueError:
