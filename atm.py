@@ -41,6 +41,14 @@ elif options.w and (options.n or options.d or options.g):
 elif options.g and (options.n or options.w or options.d):
     sys.exit(255)
 
+#Check that modes of operation values are valid:
+if options.n and not OptionChecker.checkFloat(str(options.n)):
+    sys.exit(255)
+if options.d and not OptionChecker.checkFloat(str(options.d)):
+    sys.exit(255)
+if options.w and not OptionChecker.checkFloat(str(options.w)):
+    sys.exit(255)
+
 #Check that file and account names meets specifications
 if not OptionChecker.checkFileName(options.s.split("./")[1]):
     sys.exit(255)
