@@ -67,13 +67,16 @@ if not OptionChecker.checkPortNumber(options.p):
 if not os.path.exists("./CardFiles/"):
     os.makedirs("./CardFiles/")
 
-indexFile = open("./CardFiles/index", "a+")
-if len(indexFile.read()) == 0: #New file
-    indexData = {}
-else:
-    indexFile.seek(0)
-    indexData = json.loads(indexFile.read())
-    indexFile.close()
+try:
+    indexFile = open("./CardFiles/index", "a+")
+    if len(indexFile.read()) == 0: #New file
+        indexData = {}
+    else:
+        indexFile.seek(0)
+        indexData = json.loads(indexFile.read())
+        indexFile.close()
+except IOError:
+    sys.exit(255)
 
 #Check that authFile exists.
 try:
@@ -97,17 +100,20 @@ except KeyError:
         if indexData[entry] == options.c: #If card file is associated with another account
             sys.exit(255)
 
-cardFilePath = os.path.join("./CardFiles", options.c)    
-if not os.path.exists(cardFilePath) and options.n:
-    cardFile = open(cardFilePath, "w")
-    cardPin = NetMsg.generateKey()
-    cardFile.write(cardPin)
-    cardFile.close()
-    
-    indexData[options.a] = options.c
-    indexFile = open("./CardFiles/index", "w")
-    indexFile.write(json.dumps(indexData))
-    indexFile.close()
+cardFilePath = os.path.join("./CardFiles", options.c)
+try:
+    if not os.path.exists(cardFilePath) and options.n:
+        cardFile = open(cardFilePath, "w")
+        cardPin = NetMsg.generateKey()
+        cardFile.write(cardPin)
+        cardFile.close()
+        
+        indexData[options.a] = options.c
+        indexFile = open("./CardFiles/index", "w")
+        indexFile.write(json.dumps(indexData))
+        indexFile.close()
+except IOError:
+    sys.exit(255)
 
 
 def getAuthKey():
@@ -126,13 +132,16 @@ def getAuthKey():
 
 def getCardPin():
     numLines = 0
-    for line in open(cardFilePath):
-        cardPin = line
-        numLines += 1
+    try:
+        for line in open(cardFilePath):
+            cardPin = line
+            numLines += 1
     
-    if numLines > 1:
-        print >> sys.stderr, "WARNING: More than 1 line in cardFile"
-        sys.stdout.flush()
+        if numLines > 1:
+            print >> sys.stderr, "WARNING: More than 1 line in cardFile"
+            sys.stdout.flush()
+            sys.exit(255)
+    except IOError:
         sys.exit(255)
     return cardPin
 
