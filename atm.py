@@ -13,7 +13,7 @@ cmdlineOptions = optparse.OptionGroup(parser, "Command line options", "These are
 cmdlineOptions.add_option("-a", metavar="<account>", type="string", help="Name of the account")
 cmdlineOptions.add_option("-s", metavar="<auth-file>", type="string", default="bank.auth", help="Authentication file for the account. [default: %default]")
 cmdlineOptions.add_option("-i", metavar="<ip-address>", type="string", default="127.0.0.1", help="IP address for the bank. [default: %default]")
-cmdlineOptions.add_option("-p", metavar="<port>", type="int", default=3000, help="TCP port that the bank is listening on. [default: %default]")
+cmdlineOptions.add_option("-p", metavar="<port>", type="string", default=3000, help="TCP port that the bank is listening on. [default: %default]")
 cmdlineOptions.add_option("-c", metavar="<card-file>", type="string", help="Customer's atm card file. [default: <account-name>.card]")
 parser.add_option_group(cmdlineOptions)
 
@@ -54,6 +54,14 @@ if not OptionChecker.checkFileName(os.path.split(options.s)[-1]):
     sys.exit(255)
 if not OptionChecker.checkAccountName(options.a):
     sys.exit(255)
+
+#Check that ipAddress meets specifications
+if not OptionChecker.checkIPAddress(options.i):
+    sys.exit(255)
+
+#Check that port is within range
+if not OptionChecker.checkPortNumber(options.p):
+    sys.exit(255)    
 
 #Create card file index
 if not os.path.exists("./CardFiles/"):
@@ -101,14 +109,6 @@ if not os.path.exists(cardFilePath) and options.n:
     indexFile.write(json.dumps(indexData))
     indexFile.close()
 
-#Check that ipAddress meets specifications
-if not OptionChecker.checkIPAddress(options.i):
-    sys.exit(255)
-
-#Check that port is within range
-if not OptionChecker.checkPortNumber(options.p):
-    sys.exit(255)
-
 
 def getAuthKey():
     key = {}
@@ -119,6 +119,8 @@ def getAuthKey():
     
     if numLines > 1:
         print >> sys.stderr, "WARNING: More than 1 line in authFile"
+        sys.stdout.flush()
+        sys.exit(255)
     return str(key["SecretKey"])
 
 def getCardPin():
@@ -129,42 +131,41 @@ def getCardPin():
     
     if numLines > 1:
         print >> sys.stderr, "WARNING: More than 1 line in cardFile"
+        sys.stdout.flush()
+        sys.exit(255)
     return cardPin
 
 def main():
     #Getting here implies all pre-requisites have been met (NOT FINISHED!)
     accountName = options.a
     ipAddress = options.i
-    port = options.p
+    port = int(options.p)
 
     request = {}
+    response = {}
     request["accountName"] = accountName
     request["pin"] = getCardPin()
+    response["account"] = accountName
     if options.n:
         request["action"] = "new"
         request["amount"] = float(options.n)
+        response["initial_balance"] = float(options.n)
     elif options.d:
         request["action"] = "deposit"
         request["amount"] = float(options.d)
+        response["deposit"] = float(options.d)
     elif options.w:
         request["action"] = "withdraw"
         request["amount"] = float(options.w)
+        response["withdraw"] = float(options.w)
     elif options.g:
         request["action"] = "get"
 
     request = {"request" : request}
     print >> sys.stderr, request
+    sys.stdout.flush()
     message = NetMsg(request)
     encodedMessage = message.encryptedJson(getAuthKey(), message.getJson())
-
-
-    print >> sys.stderr, "Running atm with the following settings", accountName
-    print >> sys.stderr, "Account Name is", accountName
-    print >> sys.stderr, "Bank's IP is", ipAddress
-    print >> sys.stderr, "Bank's port is", port
-    print >> sys.stderr, "Authentication file is", options.s
-    print >> sys.stderr, "Card file is", options.c
-    print >> sys.stderr, "Message is", encodedMessage
 
     # Create socket and send data to bank
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -178,13 +179,16 @@ def main():
         if int(received) == 419:
             sys.exit(255)
         elif received == "transaction_completed":
-            return  # print json output
+            print json.dumps(response)
+            print "dude!!!"
+            sys.stdout.flush()
         elif received == "transaction_failed":
             sys.exit(255)
         elif received == "protocol_error":
             sys.exit(63)
     except socket.error, e:
         print >> sys.stderr, e
+        sys.stdout.flush()
     except ValueError:
         pass
     finally:
