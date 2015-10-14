@@ -17,9 +17,9 @@ cmdlineOptions.add_option("-c", metavar="<card-file>", type="string", help="Cust
 parser.add_option_group(cmdlineOptions)
 
 modesOfOperation = optparse.OptionGroup(parser, "Modes of operation", "These options determine what a specific run of the atm program will do")
-modesOfOperation.add_option("-n", metavar="<balance>", type="int", help="Create a new account with the given balance")
-modesOfOperation.add_option("-d", metavar="<amount>", type="int", help="Deposit this amount of money in the account")
-modesOfOperation.add_option("-w", metavar="<amount>", type="int", help="Withdraw this amount from the account")
+modesOfOperation.add_option("-n", metavar="<balance>", type="float", help="Create a new account with the given balance")
+modesOfOperation.add_option("-d", metavar="<amount>", type="float", help="Deposit this amount of money in the account")
+modesOfOperation.add_option("-w", metavar="<amount>", type="float", help="Withdraw this amount from the account")
 modesOfOperation.add_option("-g", action="store_true", help="Get the current balance of the account")
 parser.add_option_group(modesOfOperation)
 
@@ -43,6 +43,7 @@ elif options.g and (options.n or options.w or options.d):
 #Check that file names meets specifications
 if len(options.s) > 255 or len(options.s) < 1:
     sys.exit(255)
+#Check that name matches regex. Use split. If the result array is greater than 2, or the second element is not empty we have a problem
     
 if len(options.a) > 250 or len(options.a) < 1:
     sys.exit(255)
@@ -57,6 +58,7 @@ if len(indexFile.read()) == 0: #New file
 else:
     indexFile.seek(0)
     indexData = json.loads(indexFile.read())
+    indexFile.close()
 
 #Check that authFile exists.
 try:
@@ -87,9 +89,9 @@ if not os.path.exists(cardFilePath) and options.n:
     cardFile.write(cardPin)
     cardFile.close()
     
-    accountData = {}
-    accountData[options.a] = options.c
-    indexFile.write(json.dumps(accountData))
+    indexData[options.a] = options.c
+    indexFile = open("./CardFiles/index", "w")
+    indexFile.write(json.dumps(indexData))
     indexFile.close()
 
 #Check that ipAddress meets specifications
@@ -169,7 +171,7 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         sock.connect((ipAddress, port))
-        sock.sendall(encodedMessage)
+        sock.sendall(message)
         received = sock.recv(1024)
     except socket.error, e:
         print e
