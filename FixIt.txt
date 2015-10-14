@@ -1,0 +1,19 @@
+SERVER
+-------
+port and auth file on command line should be optional
+	port default - 3000
+	auth default - bank.auth
+
+
+
+CLIENT
+------
+Failed 
+	2 
+	5
+	8 (should be invalid filename)
+
+
+
+
+print to stderr
