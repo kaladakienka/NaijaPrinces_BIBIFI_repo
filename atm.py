@@ -172,7 +172,9 @@ def main():
         sock.connect((ipAddress, port))
         sock.sendall(encodedMessage)
 
+        sock.settimeout(10.0)
         received = sock.recv(1024)
+        sock.settimeout(None)
         if int(received) == 419:
             sys.exit(255)
         elif received == "protocol_error":
