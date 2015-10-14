@@ -162,7 +162,7 @@ def parse_cmd_line():
     parser.add_argument('-p', '--port', help='Description for foo argument',
                         required=True, default=3000)
     parser.add_argument('-s', '--auth_file', help='Description for bar \
-                        argument', required=True)
+                        argument', default="bank.auth")
 
     try:
         args = vars(parser.parse_args())
