@@ -3,6 +3,7 @@
 import argparse
 import json
 from netmsg import NetMsg
+from OptionChecker import OptionChecker
 import os
 import SocketServer
 import sys
@@ -185,8 +186,8 @@ def parse_cmd_line():
 
         args = vars(parser.parse_args())
 
-        if int(args['port']) < 1024 or int(args['port']) > 65535:
-            exit("Port number either too small or too large\n")
+        # if OptionChecker.checkPortNumber(int(args['port'])):
+        #     exit("Port number either too small or too large\n")
     except SystemExit:
         exit("Invalid command line options provided\n")
 
@@ -210,7 +211,10 @@ def generate_auth_file(auth_file):
 #TODO: We might want to send acks regardless
 def main():
     args = parse_cmd_line()
-    generate_auth_file(args["auth_file"])
+    if OptionChecker.checkFileName(args["auth_file"]):
+        generate_auth_file(args["auth_file"])
+    else:
+        exit("Invalid file name")
 
     # Create the server, binding to localhost on port 9999
     SocketServer.TCPServer.allow_reuse_address = True

@@ -166,9 +166,14 @@ def main():
     try:
         sock.connect((ipAddress, port))
         sock.sendall(encodedMessage)
+
         received = sock.recv(1024)
+        if int(received) == 419:
+            sys.exit(255)
     except socket.error, e:
         print e
+    except ValueError:
+        pass
     finally:
         sock.close()
 
