@@ -42,11 +42,11 @@ elif options.g and (options.n or options.w or options.d):
     sys.exit(255)
     
 #Check that modes of operation values are valid:
-if options.n and not OptionChecker.checkFloat(options.n):
+if options.n and (not OptionChecker.checkFloat(options.n) or float(options.n) < 10.00):
     sys.exit(255)
-if options.d and not OptionChecker.checkFloat(options.d):
+if options.d and (not OptionChecker.checkFloat(options.d) or float(options.d)) <= 0.00:
     sys.exit(255)
-if options.w and not OptionChecker.checkFloat(options.w):
+if options.w and (not OptionChecker.checkFloat(options.w) or float(options.w)) <= 0.00:
     sys.exit(255)
 
 #Check that file and account names meets specifications
