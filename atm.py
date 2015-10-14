@@ -11,16 +11,16 @@ parser = optparse.OptionParser()
 
 cmdlineOptions = optparse.OptionGroup(parser, "Command line options", "These are the base configurations for the atm program")
 cmdlineOptions.add_option("-a", metavar="<account>", type="string", help="Name of the account")
-cmdlineOptions.add_option("-s", metavar="<auth-file>", type="string", default="./bank.auth", help="Authentication file for the account. [default: %default]")
+cmdlineOptions.add_option("-s", metavar="<auth-file>", type="string", default="bank.auth", help="Authentication file for the account. [default: %default]")
 cmdlineOptions.add_option("-i", metavar="<ip-address>", type="string", default="127.0.0.1", help="IP address for the bank. [default: %default]")
 cmdlineOptions.add_option("-p", metavar="<port>", type="int", default=3000, help="TCP port that the bank is listening on. [default: %default]")
 cmdlineOptions.add_option("-c", metavar="<card-file>", type="string", help="Customer's atm card file. [default: <account-name>.card]")
 parser.add_option_group(cmdlineOptions)
 
 modesOfOperation = optparse.OptionGroup(parser, "Modes of operation", "These options determine what a specific run of the atm program will do")
-modesOfOperation.add_option("-n", metavar="<balance>", type="float", help="Create a new account with the given balance")
-modesOfOperation.add_option("-d", metavar="<amount>", type="float", help="Deposit this amount of money in the account")
-modesOfOperation.add_option("-w", metavar="<amount>", type="float", help="Withdraw this amount from the account")
+modesOfOperation.add_option("-n", metavar="<balance>", type="string", help="Create a new account with the given balance")
+modesOfOperation.add_option("-d", metavar="<amount>", type="string", help="Deposit this amount of money in the account")
+modesOfOperation.add_option("-w", metavar="<amount>", type="string", help="Withdraw this amount from the account")
 modesOfOperation.add_option("-g", action="store_true", help="Get the current balance of the account")
 parser.add_option_group(modesOfOperation)
 
@@ -40,17 +40,17 @@ elif options.w and (options.n or options.d or options.g):
     sys.exit(255)
 elif options.g and (options.n or options.w or options.d):
     sys.exit(255)
-
+    
 #Check that modes of operation values are valid:
-if options.n and not OptionChecker.checkFloat(str(options.n)):
+if options.n and not OptionChecker.checkFloat(options.n):
     sys.exit(255)
-if options.d and not OptionChecker.checkFloat(str(options.d)):
+if options.d and not OptionChecker.checkFloat(options.d):
     sys.exit(255)
-if options.w and not OptionChecker.checkFloat(str(options.w)):
+if options.w and not OptionChecker.checkFloat(options.w):
     sys.exit(255)
 
 #Check that file and account names meets specifications
-if not OptionChecker.checkFileName(options.s.split("./")[1]):
+if not OptionChecker.checkFileName(os.path.split(options.s)[-1]):
     sys.exit(255)
 if not OptionChecker.checkAccountName(options.a):
     sys.exit(255)
@@ -91,7 +91,7 @@ except KeyError:
 
 cardFilePath = os.path.join("./CardFiles", options.c)    
 if not os.path.exists(cardFilePath) and options.n:
-    cardFile = open(cardFilePath, "a+")
+    cardFile = open(cardFilePath, "w")
     cardPin = NetMsg.generateKey()
     cardFile.write(cardPin)
     cardFile.close()
@@ -145,13 +145,13 @@ def main():
     request["pin"] = getCardPin()
     if options.n:
         request["action"] = "new"
-        request["amount"] = options.n
+        request["amount"] = float(options.n)
     elif options.d:
         request["action"] = "deposit"
-        request["amount"] = options.d
+        request["amount"] = float(options.d)
     elif options.w:
         request["action"] = "withdraw"
-        request["amount"] = options.w
+        request["amount"] = float(options.w)
     elif options.g:
         request["action"] = "get"
 

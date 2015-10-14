@@ -20,7 +20,7 @@ class OptionChecker:
     
     @staticmethod
     def checkFloat(floatString):
-        checkedArray = re.split("0*\.[0-9]{2}|[1-9][0-9]*\.[0-9]{2}", floatString)
+        checkedArray = re.split("0\.[0-9]{2}|[1-9][0-9]*\.[0-9]{2}", floatString)
         if not OptionChecker.regExpChecker(checkedArray):
             return False
         if float(floatString) < 0.00 or float(floatString) > 4294967295.99:
@@ -63,6 +63,9 @@ class OptionChecker:
     
     @staticmethod
     def checkPortNumber(portNumber):
+        # if type(portNumber) is not int:
+            # print "This is working"
+            # return False
         if portNumber < 1024 or portNumber > 65535:
             return False
         return True
