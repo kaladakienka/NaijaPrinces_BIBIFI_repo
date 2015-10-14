@@ -121,6 +121,7 @@ def getAuthKey():
         print >> sys.stderr, "WARNING: More than 1 line in authFile"
         sys.stdout.flush()
         sys.exit(255)
+    authFile.seek(0)
     return str(key["SecretKey"])
 
 def getCardPin():
@@ -162,7 +163,7 @@ def main():
         request["action"] = "get"
 
     request = {"request" : request}
-    print >> sys.stderr, request
+    # print >> sys.stderr, request
     sys.stdout.flush()
     message = NetMsg(request)
     encodedMessage = message.encryptedJson(getAuthKey(), message.getJson())
@@ -176,25 +177,26 @@ def main():
         sock.settimeout(10.0)
         received = sock.recv(1024)
         sock.settimeout(None)
-        if int(received) == 419:
-            sys.exit(255)
-        elif received == "transaction_completed":
+        received = json.loads(NetMsg.decryptJson(getAuthKey(), received))
+        if received["msg"] == "transaction_completed":
+            if options.g:
+                response["balance"] = received["balance"]
             print json.dumps(response)
-            print "dude!!!"
             sys.stdout.flush()
-        elif received == "transaction_failed":
+        elif received["msg"] == "transaction_failed":
             sys.exit(255)
-        elif received == "protocol_error":
+        elif received["msg"] == "protocol_error":
             sys.exit(63)
     except socket.error, e:
         print >> sys.stderr, e
         sys.stdout.flush()
+        sys.exit(63)
     except ValueError:
-        pass
+        sys.exit(63)
     finally:
         sock.close()
 
-    print >> sys.stderr, "Finished"
+    # print >> sys.stderr, "Finished"
     sys.stdout.flush()
 
 if __name__ == "__main__":
