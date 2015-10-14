@@ -29,7 +29,7 @@ parser.add_option_group(modesOfOperation)
 #Check that account name and mode of operation are provided
 if options.a == None:
     sys.exit(255)
-elif options.n == None and options.d == None and options.w == None and not options.g:
+elif not options.n and not options.d and not options.w and not options.g:
     sys.exit(255)
 elif options.n and (options.d or options.w or options.g):
     sys.exit(255)
