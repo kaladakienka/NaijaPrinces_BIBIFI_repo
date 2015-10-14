@@ -62,11 +62,12 @@ class OptionChecker:
         return True
     
     @staticmethod
-    def checkPortNumber(portNumber):
-        # if type(portNumber) is not int:
-            # print "This is working"
-            # return False
-        if portNumber < 1024 or portNumber > 65535:
+    def checkPortNumber(portNumberString):
+        try:
+            portNumber = int(portNumberString)
+            if portNumber < 1024 or portNumber > 65535:
+                return False        
+        except ValueError:
             return False
         return True
         
