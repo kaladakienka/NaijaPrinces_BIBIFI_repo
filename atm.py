@@ -107,7 +107,6 @@ if not OptionChecker.checkIPAddress(options.i):
 
 #Check that port is within range
 if not OptionChecker.checkPortNumber(options.p):
-    print options.p
     sys.exit(255)
 
 
@@ -115,13 +114,11 @@ def getAuthKey():
     key = {}
     numLines = 0
     for line in authFile:
-        # print line
         key = json.loads(line)
         numLines += 1
     
     if numLines > 1:
-        print "WARNING: More than 1 line in authFile"
-    # print key
+        print >> sys.stderr, "WARNING: More than 1 line in authFile"
     return str(key["SecretKey"])
 
 def getCardPin():
@@ -131,7 +128,7 @@ def getCardPin():
         numLines += 1
     
     if numLines > 1:
-        print "WARNING: More than 1 line in cardFile"
+        print >> sys.stderr, "WARNING: More than 1 line in cardFile"
     return cardPin
 
 def main():
@@ -156,18 +153,18 @@ def main():
         request["action"] = "get"
 
     request = {"request" : request}
-    print request
+    print >> sys.stderr, request
     message = NetMsg(request)
     encodedMessage = message.encryptedJson(getAuthKey(), message.getJson())
 
 
-    print "Running atm with the following settings"
-    print "Account Name is", accountName
-    print "Bank's IP is", ipAddress
-    print "Bank's port is", port
-    print "Authentication file is", options.s
-    print "Card file is", options.c
-    print "Message is", encodedMessage
+    print >> sys.stderr, "Running atm with the following settings", accountName
+    print >> sys.stderr, "Account Name is", accountName
+    print >> sys.stderr, "Bank's IP is", ipAddress
+    print >> sys.stderr, "Bank's port is", port
+    print >> sys.stderr, "Authentication file is", options.s
+    print >> sys.stderr, "Card file is", options.c
+    print >> sys.stderr, "Message is", encodedMessage
 
     # Create socket and send data to bank
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -181,13 +178,14 @@ def main():
         elif received == "protocol_error":
             sys.exit(63)
     except socket.error, e:
-        print e
+        print >> sys.stderr, e
     except ValueError:
         pass
     finally:
         sock.close()
 
-    print "Finished"
+    print >> sys.stderr, "Finished"
+    sys.stdout.flush()
 
 if __name__ == "__main__":
     main()
