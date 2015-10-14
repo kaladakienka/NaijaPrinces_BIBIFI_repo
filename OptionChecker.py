@@ -8,7 +8,8 @@ class OptionChecker:
         if len(checkedArray) > 2:
             return False
         if len(checkedArray) == 2 and checkedArray[1] != "":
-            return False    
+            return False
+        return True
     
     @staticmethod
     def checkInteger(intString):
@@ -35,6 +36,7 @@ class OptionChecker:
             return False
         if len(fileNameString) < 1 or len(fileNameString) > 255:
             return False
+        return True
     
     @staticmethod
     def checkAccountName(accountNameString):
@@ -43,12 +45,13 @@ class OptionChecker:
             return False
         if len(accountNameString) < 1 or len(accountNameString) > 250:
             return False
+        return True
     
     @staticmethod
     def checkIPAddress(ipAddressString):
         ipAddressString = ipAddressString.split(".")
         for number in ipAddressString:
-            if not checkInteger(number):
+            if not OptionChecker.checkInteger(number):
                 return False
             try:
                 number = int(number, base=10)
@@ -56,7 +59,7 @@ class OptionChecker:
                     return False
             except ValueError:
                 return False
-            return True
+        return True
     
     @staticmethod
     def checkPortNumber(portNumber):
