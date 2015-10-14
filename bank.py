@@ -78,7 +78,7 @@ class Bank(SocketServer.BaseRequestHandler):
     accounts = []
 
     def send_ack(self, ack):
-        self.request.sendall()
+        self.request.sendall(ack)
 
     def print_to_stderr(self, msg):
         if len(msg) > 0:
