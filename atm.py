@@ -169,7 +169,7 @@ def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         sock.connect((ipAddress, port))
-        sock.sendall(message)
+        sock.sendall(encodedMessage)
         received = sock.recv(1024)
     except socket.error, e:
         print e
