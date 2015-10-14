@@ -42,9 +42,7 @@ elif options.g and (options.n or options.w or options.d):
     sys.exit(255)
 
 #Check that file and account names meets specifications
-if not OptionChecker.checkFileName(options.s):
-    sys.exit(255)
-if not OptionChecker.checkFileName(options.c):
+if not OptionChecker.checkFileName(options.s.split("./")[1]):
     sys.exit(255)
 if not OptionChecker.checkAccountName(options.a):
     sys.exit(255)
@@ -70,7 +68,7 @@ except IOError, e:
 #Check that cardFile exists
 if options.c == None:
     options.c = options.a + ".card"
-if len(options.c) > 255 or len(options.c) < 1:
+if not OptionChecker.checkFileName(options.c):
     sys.exit(255)
 
 try:
@@ -100,7 +98,8 @@ if not OptionChecker.checkIPAddress(options.i):
     sys.exit(255)
 
 #Check that port is within range
-if not OptionChecker.checkPortNumber(str(options.p)):
+if not OptionChecker.checkPortNumber(options.p):
+    print options.p
     sys.exit(255)
 
 
