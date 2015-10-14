@@ -16,10 +16,16 @@ from utils import Utils
 #print "%s" % run_command("echo love")
 
 tnum = sys.argv[1]
-if tnum == "1": #correct
-	command = "python atm.py -a abc1 -n 10000"
+if tnum == "0":#correct
+	command = "python atm.py -a abc0 -n 10.30"
+elif tnum == "01":#correct
+	command = "python atm.py -a abc0 -d 5.00"	
+elif tnum == "02":#correct
+	command = "python atm.py -a abc0 -g"		
+elif tnum == "1": #correct
+	command = "python atm.py -a abc1 -n 10000.00"
 elif tnum == "2": #invalid balance format : negative
-	command = "python atm.py -a abc2 -n -10000"
+	command = "python atm.py -a abc2 -n -10000.00"
 elif tnum == "3":#invalid balance format : more than 2 decimal places
 	command = "python atm.py -a abc3 -n 10000.044"
 elif tnum == "4":#invalid balance format : leading zeros
@@ -49,5 +55,5 @@ elif tnum == "15":#invalid port format : too large
 
 Utils.printCmdOutput(command)
 
-Utils.runTest("rm -rf CardFiles/*")
+# Utils.printCmdOutput("rm -rf CardFiles/*")
 #runTest("rm -rf CardFiles/index")

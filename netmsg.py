@@ -61,7 +61,13 @@ class NetMsg:
         #decryption_suite = AES.new(key, AES.MODE_CBC, 'This is an IV456')
         #plain_text = decryption_suite.decrypt(cipher_text)
         cipher_suite = Fernet(key)
-        plain_text = cipher_suite.decrypt(cipher_text)
+        try:
+            plain_text = cipher_suite.decrypt(cipher_text)
+        except Exception,e:
+            # print "failed"
+            return ""
+
+        
         return plain_text
 
     @staticmethod
@@ -70,13 +76,16 @@ class NetMsg:
 
 
 if __name__ == "__main__":
-    #netMsg1 =  NetMsg(1000,3000,"blah")
     netMsg1 = NetMsg("blah")
-    #netMsg1.setMsg("bla")
     key = NetMsg.generateKey()
     print "key: %s" % key
     encMsg = netMsg1.encryptedJson(key, netMsg1.getJson())
     decMsg = netMsg1.decryptJson("wJ7JxFzMc0xXC66BD05UgYESWhBxB8LwHVC4xGGX5kk=", "gAAAAABWFccPazYAZQbGaqwxRLl90Ss0QYakfwNREcfA0nY-ZqUmyOPQ4ri7z4EZeg30ohiMbT0ng8mnlxtZXVYcfh-F_-dIMcyLcmKctalpayw57JHF114n5TebiOuGBKejV7LFT8MwOUZLifWFhQk1S2tdeuQxC8afko6ZWutH6_xol_oL2RFt3eSRpexuHCuH-_20udhlXWSMMA8PKR7ORldVfntUYVedYGDrsPBRcxmDTL6yvYw=")
     print "%s" % decMsg
+
+    encMsg = NetMsg.encryptedJson(key, "love")
+    decMsg = NetMsg.decryptJson("wJ7JxFzMc0xXC66BD05UgYESWhBxB8LwHVC4xGGX5kk=", encMsg)
+    print decMsg
+
 
     # print "%s" % netMsg1.getJson()

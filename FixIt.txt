@@ -8,12 +8,15 @@ port and auth file on command line should be optional
 
 CLIENT
 ------
-Failed 
+Case Tests Failed 
+	0 didn't print out
+	01 didn't print out 
+	02 didn't print out
 	2 
+	3
 	5
 	8 (should be invalid filename)
 
 
+Redirect all debugging output to stderr
 
-
-print to stderr
