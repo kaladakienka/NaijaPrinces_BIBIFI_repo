@@ -13,7 +13,7 @@ auth_key = ""
 
 class MyParser(argparse.ArgumentParser):
     def error(self, message):
-        sys.exit(2)
+        sys.exit(255)
 
 
 class Account:
@@ -77,7 +77,10 @@ class Bank(SocketServer.BaseRequestHandler):
     """
     accounts = []
 
-    def print_to_stderr(msg):
+    def send_ack(self, ack):
+        self.request.sendall(ack)
+
+    def print_to_stderr(self, msg):
         if len(msg) > 0:
             sys.stderr.write(msg)
 
@@ -114,19 +117,23 @@ class Bank(SocketServer.BaseRequestHandler):
             if request["action"] == "new":
                 if request["amount"] < 10:
                     self.print_to_stderr("Amount was less than 10\n")
+                    self.send_ack("transaction_failed")
                     return
 
                 if self.get_acct_w_acct_name_n_card_key(request["accountName"],
                                                         request["pin"]):
                     self.print_to_stderr("Account already exists\n")
+                    self.send_ack("transaction_failed")
                     return
 
                 new_account = Account(request["pin"],
                                       request["accountName"], request["amount"])
                 self.accounts.append(new_account)
+                self.send_ack("transaction_completed")
             elif request["action"] == "deposit":
                 if request["amount"] <= 0:
                     self.print_to_stderr("Amount was less than or equal to 0\n")
+                    self.send_ack("transaction_failed")
                     return
 
                 account = self.get_acct_w_acct_name_n_card_key(request[
@@ -135,9 +142,11 @@ class Bank(SocketServer.BaseRequestHandler):
 
                 if account is None:
                     self.print_to_stderr("Could not verify user account\n")
+                    self.send_ack("transaction_failed")
                     return
                 else:
                     account.deposit(request["amount"])
+                    self.send_ack("transaction_completed")
             elif request["action"] == "withdraw":
                 # account = self.get_acct_w_acct_name_n_card_key(request["pin"])
                 account = self.get_acct_w_acct_name_n_card_key(request[
@@ -145,10 +154,13 @@ class Bank(SocketServer.BaseRequestHandler):
                                                                request["pin"])
                 if account is None:
                     self.print_to_stderr("Could not verify user account\n")
+                    self.send_ack("transaction_failed")
                     return
                 else:
                     if not account.withdraw(request["amount"]):
                         self.request.sendall("419")
+                    else:
+                        self.send_ack("transaction_completed")
             elif request["action"] == "get":
                 account = self.get_acct_w_acct_name_n_card_key(request[
                                                                "accountName"],
@@ -159,6 +171,7 @@ class Bank(SocketServer.BaseRequestHandler):
                     return
                 else:
                     account.current_balance()
+                    self.send_ack("transaction_completed")
         except ValueError:
             self.request.sendall("protocol_error")
             print "protocol_error"
@@ -168,9 +181,6 @@ class Bank(SocketServer.BaseRequestHandler):
         self.data = self.request.recv(1024).strip()
         # print "{} wrote:".format(self.client_address[0])
         self.parse_request(self.data)
-
-        # just send back the same data, but upper-cased
-        # self.request.sendall(self.data.upper())
 
 
 def exit(msg):
