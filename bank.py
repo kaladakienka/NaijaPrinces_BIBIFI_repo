@@ -4,10 +4,15 @@ import argparse
 import json
 from netmsg import NetMsg
 import os
-import sys
 import SocketServer
+import sys
 
 auth_key = ""
+
+
+class MyParser(argparse.ArgumentParser):
+    def error(self, message):
+        sys.exit(2)
 
 
 class Account:
@@ -24,6 +29,7 @@ class Account:
         json_out["account"] = self.account_name
         json_out["initial_balance"] = self.balance
         print json.dumps(json_out)
+        sys.stdout.flush()
 
     def __str__(self):
         json_out = {}
@@ -66,21 +72,31 @@ class Bank(SocketServer.BaseRequestHandler):
     """
     accounts = []
 
+    def print_to_stderr(msg):
+        if len(msg) > 0:
+            sys.stderr.write(msg)
+
     def get_acct_w_acct_name_n_card_key(self, account_name, card_key):
         for account in self.accounts:
             if account_name == account.account_name \
                and card_key == account.card_key:
                 return account
 
+        return None
+
     def get_account_w_accout_name(self, account_name):
         for account in self.accounts:
             if account_name == account.account_name:
                 return account
 
+        return None
+
     def get_account_w_card_key(self, card_key):
         for account in self.accounts:
             if card_key == account.card_key:
                 return account
+
+        return None
 
     def parse_request(self, data):
         try:
@@ -92,48 +108,53 @@ class Bank(SocketServer.BaseRequestHandler):
             request = msg["request"]
             if request["action"] == "new":
                 if request["amount"] < 10:
-                    sys.stderr.write(255)
-                    sys.exit(255)
+                    self.print_to_stderr("Amount was less than 10\n")
+                    return
 
-                if self.get_acct_w_acct_name_n_card_key(request["pin"],
+                if self.get_acct_w_acct_name_n_card_key(request["accountName"],
                                                         request["pin"]):
-                    sys.stderr.write(255)
-                    sys.exit(255)
+                    self.print_to_stderr("Account already exists\n")
+                    return
 
                 new_account = Account(request["pin"],
                                       request["accountName"], request["amount"])
                 self.accounts.append(new_account)
             elif request["action"] == "deposit":
                 if request["amount"] <= 0:
-                    sys.stderr.write(255)
-                    sys.exit(255)
+                    self.print_to_stderr("Amount was less than or equal to 0\n")
+                    return
 
-                if self.get_acct_w_acct_name_n_card_key(request["pin"],
-                                                        request["pin"]):
-                    sys.stderr.write(255)
-                    sys.exit(255)
-
-                # account = self.get_acct_w_acct_name_n_card_key(request["pin"])
-                # print "Depositing money"
                 account = self.get_acct_w_acct_name_n_card_key(request[
                                                                "accountName"],
                                                                request["pin"])
-                account.deposit(request["amount"])
+
+                if account is None:
+                    self.print_to_stderr("Could not verify user account\n")
+                    return
+                else:
+                    account.deposit(request["amount"])
             elif request["action"] == "withdraw":
                 # account = self.get_acct_w_acct_name_n_card_key(request["pin"])
                 account = self.get_acct_w_acct_name_n_card_key(request[
                                                                "accountName"],
                                                                request["pin"])
-
-                #TODO: Find out if John is handling this
-                if not account.withdraw(request["amount"]):
-                    self.request.sendall("419")
+                if account is None:
+                    self.print_to_stderr("Could not verify user account\n")
+                    return
+                else:
+                    #TODO: Find out if John is handling this
+                    if not account.withdraw(request["amount"]):
+                        self.request.sendall("419")
             elif request["action"] == "get":
-                # account = self.get_acct_w_acct_name_n_card_key(request["pin"])
                 account = self.get_acct_w_acct_name_n_card_key(request[
                                                                "accountName"],
                                                                request["pin"])
-                account.current_balance()
+
+                if account is None:
+                    self.print_to_stderr("Could not verify user account\n")
+                    return
+                else:
+                    account.current_balance()
         except ValueError:
             print "protocol_error"
 
@@ -141,7 +162,6 @@ class Bank(SocketServer.BaseRequestHandler):
         # self.request is the TCP socket connected to the client
         self.data = self.request.recv(1024).strip()
         # print "{} wrote:".format(self.client_address[0])
-        # print self.data
         self.parse_request(self.data)
 
         # just send back the same data, but upper-cased
@@ -156,15 +176,13 @@ def exit(msg):
 
 
 def parse_cmd_line():
-    parser = argparse.ArgumentParser(description='bank is a server that \
-                                    simulates a bank, whose job is to keep \
-                                    track of the balance of its customers. ')
-    parser.add_argument('-p', '--port', help='Description for foo argument',
-                        default=3000)
-    parser.add_argument('-s', '--auth_file', help='Description for bar \
-                        argument', default="bank.auth")
-
     try:
+        parser = MyParser()
+        parser.add_argument('-p', '--port', help='Port Number',
+                            default=3000)
+        parser.add_argument('-s', '--auth_file', help='Authenication file name',
+                            default="bank.auth")
+
         args = vars(parser.parse_args())
 
         if int(args['port']) < 1024 or int(args['port']) > 65535:
@@ -186,21 +204,24 @@ def generate_auth_file(auth_file):
         f.close()
         print "created"
     else:
-        sys.exit(255)
+        exit("Authenication file already exists\n")
 
 
 #TODO: We might want to send acks regardless
 def main():
     args = parse_cmd_line()
+    generate_auth_file(args["auth_file"])
 
     # Create the server, binding to localhost on port 9999
-    generate_auth_file(args["auth_file"])
     SocketServer.TCPServer.allow_reuse_address = True
     server = SocketServer.TCPServer(("127.0.0.1", int(args['port'])), Bank)
 
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
-    server.serve_forever()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        sys.exit
 
 
 if __name__ == '__main__':
