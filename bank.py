@@ -160,7 +160,7 @@ def parse_cmd_line():
                                     simulates a bank, whose job is to keep \
                                     track of the balance of its customers. ')
     parser.add_argument('-p', '--port', help='Description for foo argument',
-                        required=True, default=3000)
+                        default=3000)
     parser.add_argument('-s', '--auth_file', help='Description for bar \
                         argument', default="bank.auth")
 
