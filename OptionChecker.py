@@ -13,14 +13,14 @@ class OptionChecker:
     @staticmethod
     def checkInteger(intString):
         checkedArray = re.split("0|[1-9][0-9]*", intString)
-        if not regExpChecker(checkedArray):
+        if not OptionChecker.regExpChecker(checkedArray):
             return False
         return True
     
     @staticmethod
     def checkFloat(floatString):
         checkedArray = re.split("0*\.[0-9]{2}|[1-9][0-9]*\.[0-9]{2}", floatString)
-        if not regExpChecker(checkedArray):
+        if not OptionChecker.regExpChecker(checkedArray):
             return False
         if float(floatString) < 0.00 or float(floatString) > 4294967295.99:
             return False
@@ -29,7 +29,7 @@ class OptionChecker:
     @staticmethod
     def checkFileName(fileNameString):
         checkedArray = re.split("[_\-\.0-9a-z]+", fileNameString)
-        if not regExpChecker(checkedArray):
+        if not OptionChecker.regExpChecker(checkedArray):
             return False
         if fileNameString == "." or fileNameString == "..":
             return False
@@ -39,7 +39,7 @@ class OptionChecker:
     @staticmethod
     def checkAccountName(accountNameString):
         checkedArray = re.split("[_\-\.0-9a-z]+", accountNameString)
-        if not regExpChecker(checkedArray):
+        if not OptionChecker.regExpChecker(checkedArray):
             return False
         if len(accountNameString) < 1 or len(accountNameString) > 250:
             return False
