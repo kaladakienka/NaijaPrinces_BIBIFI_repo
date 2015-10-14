@@ -5,6 +5,7 @@ import socket
 import json
 import uuid
 from netmsg import NetMsg
+from OptionChecker import OptionChecker
 
 parser = optparse.OptionParser()
 
@@ -40,12 +41,12 @@ elif options.w and (options.n or options.d or options.g):
 elif options.g and (options.n or options.w or options.d):
     sys.exit(255)
 
-#Check that file names meets specifications
-if len(options.s) > 255 or len(options.s) < 1:
+#Check that file and account names meets specifications
+if not OptionChecker.checkFileName(options.s):
     sys.exit(255)
-#Check that name matches regex. Use split. If the result array is greater than 2, or the second element is not empty we have a problem
-    
-if len(options.a) > 250 or len(options.a) < 1:
+if not OptionChecker.checkFileName(options.c):
+    sys.exit(255)
+if not OptionChecker.checkAccountName(options.a):
     sys.exit(255)
 
 #Create card file index
@@ -95,17 +96,11 @@ if not os.path.exists(cardFilePath) and options.n:
     indexFile.close()
 
 #Check that ipAddress meets specifications
-ipAddress = options.i.split(".")
-for number in ipAddress:
-    try:
-        number = int(number, base=10)
-        if number < 0 or number > 255:
-            sys.exit(255)
-    except ValueError:
-        sys.exit(255)
+if not OptionChecker.checkIPAddress(options.i):
+    sys.exit(255)
 
 #Check that port is within range
-if options.p < 1024 or options.p > 65535:
+if not OptionChecker.checkPortNumber(str(options.p)):
     sys.exit(255)
 
 
