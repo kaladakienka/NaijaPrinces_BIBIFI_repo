@@ -39,12 +39,16 @@ class Account:
         json_out["card_key"] = self.card_key
         return json.dumps(json_out)
 
+    def print_json(self, json_out):
+        print json.dumps(json_out)
+        sys.stdout.flush()
+
     def deposit(self, amount):
         self.balance = self.balance + amount
         json_out = {}
         json_out["account"] = self.account_name
         json_out["deposit"] = amount
-        print json.dumps(json_out)
+        self.print_json(json_out)
 
     def withdraw(self, amount):
         if self.balance < amount:
@@ -54,13 +58,13 @@ class Account:
         json_out = {}
         json_out["account"] = self.account_name
         json_out["withdraw"] = amount
-        print json.dumps(json_out)
+        self.print_json(json_out)
 
     def current_balance(self):
         json_out = {}
         json_out["account"] = self.account_name
         json_out["balance"] = self.balance
-        print json.dumps(json_out)
+        self.print_json(json_out)
 
 
 class Bank(SocketServer.BaseRequestHandler):
@@ -143,7 +147,6 @@ class Bank(SocketServer.BaseRequestHandler):
                     self.print_to_stderr("Could not verify user account\n")
                     return
                 else:
-                    #TODO: Find out if John is handling this
                     if not account.withdraw(request["amount"]):
                         self.request.sendall("419")
             elif request["action"] == "get":
@@ -157,6 +160,7 @@ class Bank(SocketServer.BaseRequestHandler):
                 else:
                     account.current_balance()
         except ValueError:
+            self.request.sendall("protocol_error")
             print "protocol_error"
 
     def handle(self):
