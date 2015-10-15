@@ -59,6 +59,10 @@ class Account:
         json_out["account"] = self.account_name
         json_out["withdraw"] = amount
         self.print_json(json_out)
+        return True
+
+    def get_balance(self):
+        return self.balance
 
     def current_balance(self):
         json_out = {}
@@ -78,6 +82,7 @@ class Bank(SocketServer.BaseRequestHandler):
     accounts = []
 
     def send_ack(self, ack):
+        ack = NetMsg.encryptedJson(auth_key, ack)
         self.request.sendall(ack)
 
     def print_to_stderr(self, msg):
@@ -111,29 +116,39 @@ class Bank(SocketServer.BaseRequestHandler):
             # decrypt message
             net_msg = json.loads(NetMsg.decryptJson(auth_key, data))
             msg = net_msg["msg"]
+            response = {}
+            response["msgID"] = net_msg["msgID"] + 1
+            response["code"] = 0
 
             # perform atm request
             request = msg["request"]
             if request["action"] == "new":
                 if request["amount"] < 10:
                     self.print_to_stderr("Amount was less than 10\n")
-                    self.send_ack("transaction_failed")
+                    response["msg"] = "transaction_failed"
+                    self.send_ack(json.dumps(response))
+                    # self.send_ack("transaction_failed")
                     return
 
                 if self.get_acct_w_acct_name_n_card_key(request["accountName"],
                                                         request["pin"]):
                     self.print_to_stderr("Account already exists\n")
-                    self.send_ack("transaction_failed")
+                    response["msg"] = "transaction_failed"
+                    # self.send_ack("transaction_failed")
                     return
 
                 new_account = Account(request["pin"],
                                       request["accountName"], request["amount"])
                 self.accounts.append(new_account)
-                self.send_ack("transaction_completed")
+                response["msg"] = "transaction_completed"
+                self.send_ack(json.dumps(response))
+                # self.send_ack("transaction_completed")
             elif request["action"] == "deposit":
                 if request["amount"] <= 0:
                     self.print_to_stderr("Amount was less than or equal to 0\n")
-                    self.send_ack("transaction_failed")
+                    response["msg"] = "transaction_failed"
+                    self.send_ack(json.dumps(response))
+                    # self.send_ack("transaction_failed")
                     return
 
                 account = self.get_acct_w_acct_name_n_card_key(request[
@@ -142,11 +157,16 @@ class Bank(SocketServer.BaseRequestHandler):
 
                 if account is None:
                     self.print_to_stderr("Could not verify user account\n")
-                    self.send_ack("transaction_failed")
+                    response["msg"] = "transaction_failed"
+                    self.send_ack(json.dumps(response))
+                    # self.send_ack("transaction_failed")
                     return
                 else:
                     account.deposit(request["amount"])
-                    self.send_ack("transaction_completed")
+                    response["msg"] = "transaction_completed"
+                    response["balance"] = account.get_balance()
+                    self.send_ack(json.dumps(response))
+                    # self.send_ack("transaction_completed")
             elif request["action"] == "withdraw":
                 # account = self.get_acct_w_acct_name_n_card_key(request["pin"])
                 account = self.get_acct_w_acct_name_n_card_key(request[
@@ -154,13 +174,21 @@ class Bank(SocketServer.BaseRequestHandler):
                                                                request["pin"])
                 if account is None:
                     self.print_to_stderr("Could not verify user account\n")
-                    self.send_ack("transaction_failed")
+                    response["msg"] = "transaction_failed"
+                    self.send_ack(json.dumps(response))
+                    # self.send_ack("transaction_failed")
                     return
                 else:
                     if not account.withdraw(request["amount"]):
-                        self.request.sendall("419")
+                        response["msg"] = "transaction_failed"
+                        response["code"] = 419
+                        self.send_ack(json.dumps(response))
+                        # self.request.sendall("419")
                     else:
-                        self.send_ack("transaction_completed")
+                        # self.send_ack("transaction_completed")
+                        response["msg"] = "transaction_completed"
+                        response["balance"] = account.get_balance()
+                        self.send_ack(json.dumps(response))
             elif request["action"] == "get":
                 account = self.get_acct_w_acct_name_n_card_key(request[
                                                                "accountName"],
@@ -171,9 +199,14 @@ class Bank(SocketServer.BaseRequestHandler):
                     return
                 else:
                     account.current_balance()
-                    self.send_ack("transaction_completed")
+                    response["msg"] = "transaction_completed"
+                    response["balance"] = account.get_balance()
+                    self.send_ack(json.dumps(response))
+                    # self.send_ack(str(account.get_balance()))
         except ValueError:
-            self.request.sendall("protocol_error")
+            # self.request.sendall("protocol_error")
+            response["msg"] = "protocol_error"
+            self.send_ack(json.dumps(response))
             print "protocol_error"
 
     def handle(self):
@@ -217,7 +250,7 @@ def generate_auth_file(auth_file):
         auth_key = json_out["SecretKey"]
         f.write(json.dumps(json_out))
         f.close()
-        print "created"
+        # print "created"
     else:
         exit("Authenication file already exists\n")
 
